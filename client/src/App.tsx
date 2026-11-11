@@ -1,47 +1,46 @@
-import { useEffect, useState } from "react";
-import { api } from "./api/client";
 
-type Property = {
-    id: number;
-    title: string;
-    price: number;
-    location: string;
-};
+import { Route, Routes } from "react-router-dom";
+import Home from "./Home";
+import { PropertyDetails } from "./pages/PropertyDetails";
+import { NewProperty } from "./pages/NewProperty";
+import { EditProperty } from "./pages/EditProperty";
+import { Navbar } from "./components/Navbar";
 
 function App() {
-    const [properties, setProperties] = useState<Property[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-
-    useEffect(() => {
-        api
-            .get<Property[]>("/properties")
-            .then((response) => {
-                setProperties(response.data);
-            })
-            .catch(() => {
-                setError("Failed to load properties");
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    }, []);
-
-    if (loading) return <p>Loading properties...</p>;
-    if (error) return <p>{error}</p>;
-
     return (
-        <main className="min-h-screen bg-slate-900 p-8 text-white">
-            <h1 className="mb-6 text-3xl font-bold">Mini PropMatch</h1>
+        <Routes>
+            <Route path="/" element={<Home />} />
 
-            {properties.map((property) => (
-                <article key={property.id} className="mb-4 rounded-lg bg-slate-800 p-4">
-                    <h2 className="text-xl font-semibold">{property.title}</h2>
-                    <p>{property.location}</p>
-                    <p>₹{property.price.toLocaleString("en-IN")}</p>
-                </article>
-            ))}
-        </main>
+            <Route
+                path="/properties/new"
+                element={
+                    <>
+                        <Navbar />
+                        <NewProperty />
+                    </>
+                }
+            />
+
+            <Route
+                path="/properties/:id/edit"
+                element={
+                    <>
+                        <Navbar />
+                        <EditProperty />
+                    </>
+                }
+            />
+
+            <Route
+                path="/properties/:id"
+                element={
+                    <>
+                        <Navbar />
+                        <PropertyDetails />
+                    </>
+                }
+            />
+        </Routes>
     );
 }
 
