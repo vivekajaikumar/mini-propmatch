@@ -3,8 +3,11 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
+import { useAuth } from "../context/AuthContext";
+
 export function Login() {
     const navigate = useNavigate();
+    const { refreshUser } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -23,6 +26,10 @@ export function Login() {
                 password,
             });
 
+            // Update the logged-in user across React.
+            await refreshUser();
+
+            // Redirect to the homepage.
             navigate("/");
         } catch (err) {
             if (axios.isAxiosError(err)) {
@@ -49,6 +56,7 @@ export function Login() {
                     <label htmlFor="email" className="mb-2 block">
                         Email
                     </label>
+
                     <input
                         id="email"
                         type="email"
@@ -64,6 +72,7 @@ export function Login() {
                     <label htmlFor="password" className="mb-2 block">
                         Password
                     </label>
+
                     <input
                         id="password"
                         type="password"
