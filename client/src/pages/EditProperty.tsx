@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
+
 import { api } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import type { Property } from "../types/property";
 
 const propertySchema = z.object({
@@ -44,6 +46,7 @@ type FormErrors = Partial<
 export function EditProperty() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState("");
@@ -51,6 +54,7 @@ export function EditProperty() {
     const [imageUrl, setImageUrl] = useState("");
 
     const [loading, setLoading] = useState(true);
+    const [isOwner, setIsOwner] = useState(false);
     const [loadError, setLoadError] = useState("");
     const [errors, setErrors] = useState<FormErrors>({});
     const [serverError, setServerError] = useState("");
@@ -60,6 +64,7 @@ export function EditProperty() {
         const controller = new AbortController();
 
         setLoading(true);
+        setIsOwner(false);
         setLoadError("");
         setErrors({});
         setServerError("");
@@ -72,15 +77,31 @@ export function EditProperty() {
 
                 const property = response.data;
 
+                // Only the owner is allowed to see the edit form.
+                const ownsProperty =
+                    user !== null &&
+                    property.ownerId !== null &&
+                    user.id === property.ownerId;
+
+                if (!ownsProperty) {
+                    setLoadError(
+                        "403 — You do not own this property."
+                    );
+                    return;
+                }
+
                 setTitle(property.title);
                 setPrice(String(property.price));
                 setLocation(property.location);
                 setImageUrl(property.imageUrl);
+
+                setIsOwner(true);
             })
             .catch((error) => {
                 if (controller.signal.aborted) return;
 
                 console.error("Failed to load property:", error);
+
                 setLoadError(
                     "Property not found or failed to load."
                 );
@@ -92,7 +113,7 @@ export function EditProperty() {
             });
 
         return () => controller.abort();
-    }, [id]);
+    }, [id, user?.id]);
 
     function handlePriceChange(value: string) {
         const digits = value.replace(/\D/g, "");
@@ -108,7 +129,15 @@ export function EditProperty() {
     ) {
         event.preventDefault();
 
-        if (submitting || loading || loadError) return;
+        if (
+            submitting ||
+            loading ||
+            loadError ||
+            !isOwner ||
+            !user
+        ) {
+            return;
+        }
 
         setErrors({});
         setServerError("");
@@ -146,8 +175,9 @@ export function EditProperty() {
             navigate(`/properties/${response.data.id}`);
         } catch (error) {
             console.error("Failed to update property:", error);
+
             setServerError(
-                "Could not save changes. Please try again."
+                "Could not save changes. You may not have permission to edit this property."
             );
         } finally {
             setSubmitting(false);
@@ -192,12 +222,24 @@ export function EditProperty() {
                 )}
 
                 {!loading && loadError && (
-                    <p role="alert" className="text-red-400">
-                        {loadError}
-                    </p>
+                    <div
+                        role="alert"
+                        className="max-w-2xl rounded-xl border border-red-500/20 bg-red-500/10 p-6"
+                    >
+                        <p className="font-semibold text-red-400">
+                            {loadError}
+                        </p>
+
+                        <Link
+                            to={`/properties/${id}`}
+                            className="mt-4 inline-block text-sm text-green-400 hover:underline"
+                        >
+                            Back to property details
+                        </Link>
+                    </div>
                 )}
 
-                {!loading && !loadError && (
+                {!loading && !loadError && isOwner && (
                     <form
                         onSubmit={handleSubmit}
                         noValidate

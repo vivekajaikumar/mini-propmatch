@@ -1,11 +1,14 @@
 
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+
 import { api } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import type { Property } from "../types/property";
 
 export function PropertyDetails() {
     const { id } = useParams<{ id: string }>();
+    const { user } = useAuth();
 
     const [property, setProperty] = useState<Property | null>(null);
     const [loading, setLoading] = useState(true);
@@ -40,6 +43,12 @@ export function PropertyDetails() {
         };
     }, [id]);
 
+    const isOwner =
+        user !== null &&
+        property !== null &&
+        property.ownerId !== null &&
+        user.id === property.ownerId;
+
     return (
         <main className="mx-auto min-h-screen max-w-7xl px-6 py-12">
             <Link
@@ -69,13 +78,15 @@ export function PropertyDetails() {
                                 PROPERTY / {property.id}
                             </p>
 
-                            <Link
-                                to={`/properties/${property.id}/edit`}
-                                className="inline-flex items-center gap-2 rounded-lg border border-green-500/40 px-5 py-2.5 text-sm font-semibold text-green-400 transition-colors hover:border-green-400 hover:bg-green-500/10"
-                            >
-                                <span aria-hidden="true">✎</span>
-                                Edit Property
-                            </Link>
+                            {isOwner && (
+                                <Link
+                                    to={`/properties/${property.id}/edit`}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-green-500/40 px-5 py-2.5 text-sm font-semibold text-green-400 transition-colors hover:border-green-400 hover:bg-green-500/10"
+                                >
+                                    <span aria-hidden="true">✎</span>
+                                    Edit Property
+                                </Link>
+                            )}
                         </div>
 
                         <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-6xl">
