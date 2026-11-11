@@ -5,10 +5,9 @@ CREATE TABLE IF NOT EXISTS properties (
                                           title VARCHAR(255) NOT NULL,
 
     price BIGINT NOT NULL
-    CHECK (price > 0),
+    CHECK (price >= 0),
 
     location VARCHAR(255) NOT NULL,
 
     image_url TEXT NOT NULL
     );
-
