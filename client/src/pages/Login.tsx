@@ -1,12 +1,17 @@
 
 import { useState, type FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import {
+    useNavigate,
+    useLocation,
+    Link,
+} from "react-router-dom";
 import axios from "axios";
 
 import { useAuth } from "../context/AuthContext";
 
 export function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { refreshUser } = useAuth();
 
     const [email, setEmail] = useState("");
@@ -14,7 +19,26 @@ export function Login() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    // Read the original page saved by ProtectedRoute.
+    // Only accept an internal pathname, not an external URL.
+    const savedFrom = location.state?.from;
+    const destination =
+        savedFrom &&
+        typeof savedFrom.pathname === "string" &&
+        savedFrom.pathname.startsWith("/") &&
+        !savedFrom.pathname.startsWith("//")
+            ? savedFrom.pathname +
+            (typeof savedFrom.search === "string"
+                ? savedFrom.search
+                : "") +
+            (typeof savedFrom.hash === "string"
+                ? savedFrom.hash
+                : "")
+            : "/";
+
+    async function handleSubmit(
+        event: FormEvent<HTMLFormElement>
+    ) {
         event.preventDefault();
 
         setError("");
@@ -26,11 +50,11 @@ export function Login() {
                 password,
             });
 
-            // Update the logged-in user across React.
+            // Update authentication state throughout React.
             await refreshUser();
 
-            // Redirect to the homepage.
-            navigate("/");
+            // Return to the original page after login.
+            navigate(destination, { replace: true });
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 setError(
@@ -51,9 +75,15 @@ export function Login() {
                 Welcome back
             </h1>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+            >
                 <div>
-                    <label htmlFor="email" className="mb-2 block">
+                    <label
+                        htmlFor="email"
+                        className="mb-2 block"
+                    >
                         Email
                     </label>
 
@@ -63,13 +93,18 @@ export function Login() {
                         autoComplete="email"
                         required
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(event) =>
+                            setEmail(event.target.value)
+                        }
                         className="w-full rounded-lg border border-slate-600 bg-slate-900 p-3 text-white"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="password" className="mb-2 block">
+                    <label
+                        htmlFor="password"
+                        className="mb-2 block"
+                    >
                         Password
                     </label>
 
@@ -79,13 +114,18 @@ export function Login() {
                         autoComplete="current-password"
                         required
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(event) =>
+                            setPassword(event.target.value)
+                        }
                         className="w-full rounded-lg border border-slate-600 bg-slate-900 p-3 text-white"
                     />
                 </div>
 
                 {error && (
-                    <p role="alert" className="text-red-400">
+                    <p
+                        role="alert"
+                        className="text-red-400"
+                    >
                         {error}
                     </p>
                 )}
@@ -95,7 +135,9 @@ export function Login() {
                     disabled={loading}
                     className="w-full rounded-lg bg-emerald-500 p-3 font-semibold text-slate-950 disabled:opacity-50"
                 >
-                    {loading ? "Logging in..." : "Log in"}
+                    {loading
+                        ? "Logging in..."
+                        : "Log in"}
                 </button>
             </form>
 
