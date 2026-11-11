@@ -3,6 +3,8 @@ import { Route, Routes } from "react-router-dom";
 
 import Home from "./Home";
 import { Navbar } from "./components/Navbar";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+
 import { PropertyDetails } from "./pages/PropertyDetails";
 import { NewProperty } from "./pages/NewProperty";
 import { EditProperty } from "./pages/EditProperty";
@@ -39,7 +41,9 @@ function App() {
                 element={
                     <>
                         <Navbar />
-                        <NewProperty />
+                        <ProtectedRoute>
+                            <NewProperty />
+                        </ProtectedRoute>
                     </>
                 }
             />
@@ -49,7 +53,9 @@ function App() {
                 element={
                     <>
                         <Navbar />
-                        <EditProperty />
+                        <ProtectedRoute>
+                            <EditProperty />
+                        </ProtectedRoute>
                     </>
                 }
             />
